@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block header %}
+<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css">
+{{ form.media }}
+
+<title>새 계획</title>
+{% endblock header %}
+
+{% block contents %}
+<div class="row mt-5">
+  <div class="col">
+    <form method="POST" action=".">
+    {% csrf_token %}
+    {% for field in form  %}
+    <div class="form-group">
+      <label for="{{ field.id_for_label }}"> {{ field.label }} </label>
+        {{ field }}
+        {% if field.errors %}
+        <span style="color: red">{{ field.errors }}</span>
+        {% endif %}
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">생성</button>
+      </form>
+    </div>
+  </div>
+  
+    
+</div>
+
+{% endblock contents %}

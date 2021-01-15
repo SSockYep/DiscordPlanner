@@ -1,0 +1,15 @@
+### Django ###
+db.sqlite3
+*.log
+*.pot
+*.pyc
+__pychache__/
+
+### constants ###
+**/constants.py
+
+### virtualenv ###
+discord_env/
+
+### vscode ###
+.vscode/
