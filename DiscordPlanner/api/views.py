@@ -4,7 +4,11 @@ from .discord_api import exchange_code, get_guild_info
 
 
 def mainView(request):
-    return render(request, 'main.html')
+    if request.COOKIES.get('access_token'):
+        context = {'token': True}
+    else:
+        context = {'token': False}
+    return render(request, 'main.html', context)
 
 
 def testView(request):

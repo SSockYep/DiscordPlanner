@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block header %}
+<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css">
+{{ form.media }}
+
+<title>계획 목록</title>
+
+{% endblock header %}
+
+{% block contents %}
+<div class="row mt-5">
+  <div class="col">
+  <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">서버</th>
+          <th scope="col">이름</th>
+          <th scope="col">시각</th>
+          <th scope="col">최대인원</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for plan in plans  %}
+        <tr>
+          <td>{{plan.guild}}</td>
+          <td>{{plan.name}}</td>
+          <td>{{plan.time}}</td>
+          <td>
+          {% if plan.max_attendee %}
+          {{plan.max_attendee}}
+          {% else %}
+          -
+          {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <a class="btn btn-primary" href='new'>새 계획</a>
+    </div>
+  </div>
+  
+    
+</div>
+
+{% endblock contents %}

@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 {% block contents %}
+<a class="btn btn-primary" href=''>서버에 봇 추가하기</a>
 {% if token %}
+<a class="btn btn-primary" href='plans/new'>계획 생성</a>
+<a class="btn btn-primary" href='plans/'>계획 확인</a>
 {% else %}
-<button class="btn btn-primary" onclick="location.href='login'">test</button>
+<a class="btn btn-primary" href='login/'>로그인</a>
 {% endif %}
 {% endblock contents %}

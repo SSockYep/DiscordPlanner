@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class OauthConfig(AppConfig):
-    name = 'oauth'
+class PlansConfig(AppConfig):
+    name = 'api'

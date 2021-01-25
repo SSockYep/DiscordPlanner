@@ -1,5 +1,5 @@
 import requests
-from .constants import *
+from DiscordPlanner.constants import *
 
 
 def exchange_code(code, redirect_uri):
@@ -26,5 +26,14 @@ def get_guild_info(token_type, token):
         'Authorization': token_type + ' ' + token
     }
     r = requests.get('%s/users/@me/guilds' % (API_ENDPOINT), headers=headers)
+    r.raise_for_status()
+    return r.json()
+
+
+def get_user_info(token_type, token):
+    headers = {
+        'Authorization': token_type + ' ' + token
+    }
+    r = requests.get('%s/users/@me' % (API_ENDPOINT), headers=headers)
     r.raise_for_status()
     return r.json()
