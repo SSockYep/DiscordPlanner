@@ -1,43 +1,132 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from .discord_api import exchange_code, get_guild_info
+from django.views import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from plans.models import Plan
+from django.http import HttpResponse, JsonResponse
+from baseApp.models import User, Guild
+from baseApp.discord_api import get_user_info, get_guild_info
+import json
 
 
-def mainView(request):
-    if request.COOKIES.get('access_token'):
-        context = {'token': True}
-    else:
-        context = {'token': False}
-    return render(request, 'main.html', context)
+class APIBaseView(View):
+    @staticmethod
+    def response(data={}, message='', status=200):
+        result = {
+            'data': data,
+            'message': message,
+        }
+        return JsonResponse(result, status=status)
 
 
-def testView(request):
-    try:
-        code = request.GET['code']
-        print('code:', code)
-        r = exchange_code(code)
-        print('r:', r)
-        guilds = get_guild_info(r['token_type'], r['access_token'])
-        print(guilds)
-        response = HttpResponse(str(r))
-        response.set_cookie(key='token_type', value=r['token_type'])
-        response.set_cookie(key='access_token', value=r['access_token'])
-    except:
-        return HttpResponse('no code')
-    return response
+class CreateGuildView(APIBaseView):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateGuildView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request):
+        try:
+            gid = request.POST.get('gid', '')
+            name = request.POST.get('name', '')
+        except:
+            return self.response(message='error', status=400)
+
+        guild, created = Guild.objects.get_or_create(name=name, gid=gid)
+        if created:
+            guild.save()
+
+        return self.response({'gid': guild.gid, 'name': guild.name}, 'guild created')
 
 
-def loginView(request):
-    if request.COOKIES.get('access_token'):
-        return redirect('/')
-    elif request.GET.get('code'):
-        code = request.GET['code']
+class CreateUserView(APIBaseView):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(GuildRegisterView, self).dispatch(request, *args, **kwargs)
 
-        r = exchange_code(
-            code, 'http://127.0.0.1:8000/login')
-        response = redirect('/')
-        response.set_cookie(key='token_type', value=r['token_type'])
-        response.set_cookie(key='access_token', value=r['access_token'])
-        return response
-    else:
-        return redirect('https://discord.com/api/oauth2/authorize?client_id=781130078272094209&redirect_uri=http%3A%2F%2F127.0.0.1%3A8000%2Flogin&response_type=code&scope=identify%20guilds')
+    def post(self, request):
+        try:
+            uid = request.POST.get('uid', '')
+            name = request.POST.get('name', '')
+        except:
+            return self.response(message='error', status=400)
+
+        user = User(uid=uid, name=name)
+        user.save()
+
+        return self.response({'uid': user.uid, 'name': user.name}, 'user greated')
+
+
+class CreateUserAndJoinGuildView(APIBaseView):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateUserAndJoinGuildView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request):
+        try:
+            uid = request.POST.get('uid', '')
+            name = request.POST.get('name', '')
+            gid = request.POST.get('gid', '')
+        except:
+            return self.response(message='error', status=400)
+
+        user, created = User.objects.get_or_create(uid=uid, name=name)
+        if created:
+            user.save()
+
+        guild = Guild.objects.get(gid=gid)
+        guild.user.add(user)
+        guild.save()
+
+        return self.response({'uid': user.uid, 'name': user.name, 'guild_name': guild.name}, 'user created and joined')
+
+
+class JoinGuildView(APIBaseView):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(JoinGuildView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request):
+        print(request)
+        try:
+            gid = request.POST.get('gid', '')
+            uid = request.POST.get('uid', '')
+            guild = Guild.objects.get(gid=gid)
+            user = User.objects.get(uid=uid)
+        except:
+            return self.response(message='error', status=400)
+
+        guild.user.add(user)
+        guild.save()
+
+        return self.response({'gid': guild.gid, 'guild_name': guild.name, 'user': user.name},
+                             '%s registered to %s' % (user.name, guild.name))
+
+
+class GetUsersView(APIBaseView):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(GetUsersView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        try:
+            gid = request.GET.get('gid', '')
+        except:
+            return self.response(message='no gid', status=400)
+        try:
+            guild = Guild.objects.get(gid=gid)
+        except:
+            return self.response(message='no guild with gid %s' % gid, status=400)
+        users = guild.user.all()
+        response_data = {"users": list(users)}
+        return self.response(response_data, 'user list of guild %s' % guild.name)
+
+
+class GetAllGuildsView(APIBaseView):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(GetAllGuildsView).dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        guilds = Guild.objects.all()
+        response_data = {"guilds": list(guilds)}
+        return self.response(response_data, 'guild list' % guild.name)

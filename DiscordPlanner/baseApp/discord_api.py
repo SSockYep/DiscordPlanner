@@ -3,7 +3,6 @@ from DiscordPlanner.constants import *
 
 
 def exchange_code(code, redirect_uri):
-    print(redirect_uri)
     data = {
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET,

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block contents %}
-<a class="btn btn-primary" href=''>서버에 봇 추가하기</a>
+<a class="btn btn-primary" href='{{ invite_url }}' target="_blank">서버에 봇 추가하기</a>
 {% if token %}
 <a class="btn btn-primary" href='plans/new'>계획 생성</a>
 <a class="btn btn-primary" href='plans/'>계획 확인</a>

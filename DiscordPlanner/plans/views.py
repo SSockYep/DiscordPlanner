@@ -1,16 +1,16 @@
 from django.shortcuts import render, redirect
 from django.views.generic import FormView
 from .forms import NewPlanForm
-from api.discord_api import get_guild_info, get_user_info
+from baseApp.discord_api import get_guild_info, get_user_info
 from DiscordPlanner.constants import *
 from pymongo import MongoClient
 from django.utils.dateparse import parse_datetime
 import datetime
 
-# Create your views here.
 
-
-def plans(request):
+def planView(request):
+    if not request.COOKIES.get('access_token'):
+        return redirect('/login')
     cluster = MongoClient(MONGO_URL)
     db = cluster["DiscordPlannerDB"]
     collection = db["Plans"]
@@ -31,40 +31,36 @@ def plans(request):
     return render(request, 'plans.html', context)
 
 
-def newPlan(request):
+def attendPlanView(request):
     if not request.COOKIES.get('access_token'):
         return redirect('/login')
+
+
+def newPlanView(request):
+    if not request.COOKIES.get('access_token'):
+        return redirect('/login')
+    guilds = get_guild_info(request.COOKIES.get(
+        'token_type'), request.COOKIES.get('access_token'))
+    guild_list = []
+    for guild in guilds:
+        guild_list.append((int(guild['id']), guild['name']))
     if request.method == 'POST':
-        cluster = MongoClient(MONGO_URL)
-        db = cluster["DiscordPlannerDB"]
-        collection = db["Plans"]
         user_info = get_user_info(request.COOKIES.get(
             'token_type'), request.COOKIES.get('access_token'))
-        guild = int(request.POST['guild'])
-        plan_name = request.POST['plan_name']
-        time = parse_datetime(request.POST['datetime'])
-        print(time)
 
-        plan_info = {'guild': guild,
-                     'name': plan_name,
-                     'time': time,
-                     'attendee': [user_info['id']]}
-
-        if request.POST['attendee_num']:
-            plan_info['max_attendee'] = int(request.POST['attendee_num'])
-        print(plan_info)
-        collection.insert_one(plan_info)
-        return redirect('/plans')
+        plan_form = NewPlanForm(request.POST)
+        plan_form.fields['guild'].choices = guild_list
+        if plan_form.is_valid():
+            print('asdf')
+            plan = plan_form.save()
+            return redirect('/plans')
+        else:
+            return redirect('/plans/new')
 
     else:
-        guilds = get_guild_info(request.COOKIES.get(
-            'token_type'), request.COOKIES.get('access_token'))
-        guild_list = []
-        for guild in guilds:
-            guild_list.append((guild['id'], guild['name']))
-        my_form = NewPlanForm()
-        my_form.fields['guild'].choices = guild_list
+        plan_form = NewPlanForm()
+        plan_form.fields['guild'].choices = guild_list
         context = {
-            'form': my_form,
+            'form': plan_form,
         }
         return render(request, 'new_plan.html', context)

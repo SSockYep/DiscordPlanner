@@ -5,6 +5,8 @@ from pymongo import MongoClient
 from constants import *
 import time
 import datetime
+import requests
+import json
 
 
 cluster = MongoClient(MONGO_URL)
@@ -149,7 +151,66 @@ async def on_member_remove(member):
 
 
 @bot.event
+async def on_guild_join(guild):
+    api_url = BASE_URL + '/api/guild/create'
+    member_ids = []
+    for memeber in guild.members:
+        member_ids.append({'uid': member.id, 'name': member.name})
+    data = {
+        'gid': guild.id,
+        'name': guild.name,
+        'members': members,
+    }
+    print(data)
+    response = requests.post(api_url, data=data)  # await?
+    response.raise_for_status()
+    print(response.json())
+
+
+@bot.event
+async def on_member_join(member):
+    print('%s join' % member.name)
+    user_data = {'uid': member.id, 'name': member.name}
+    join_data = {
+        'gid': member.guild.id,
+        'uid': member.id,
+    }
+    response = requests.post(BASE_URL + '/api/user/create', data=user_data)
+    response.raise_for_status()
+    print(response.json())
+    response = requests.post(BASE_URL + '/api/user/join_guild', data=join_data)
+    response.raise_for_status()
+    print(response.json())
+
+
+@bot.event
 async def on_ready():
+    print('Logging on...')
+    for guild in bot.guilds:
+        member_response_list = []
+        response = requests.post(
+            BASE_URL + '/api/guild/create',
+            data={
+                'gid': guild.id,
+                'name': guild.name,
+            }
+        )
+        response.raise_for_status()
+        print(response.json())
+        for m in guild.members:
+            response = requests.post(
+                BASE_URL + '/api/user/create_and_join_guild',
+                data={
+                    'uid': m.id,
+                    'name': m.name,
+                    'gid': guild.id,
+                }
+            )
+            response.raise_for_status()
+
+            member_response_list.append(response.json())
+        print(member_response_list)
+
     print('Logged on as', bot.user)
     send_alarm_loop.start()
 

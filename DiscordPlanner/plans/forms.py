@@ -1,12 +1,13 @@
 from django import forms
 from tempus_dominus.widgets import DatePicker, TimePicker, DateTimePicker
+from .models import Plan
 
 
-class NewPlanForm(forms.Form):
+class NewPlanForm(forms.ModelForm):
     guild = forms.ChoiceField(
         label="서버 선택", widget=forms.Select)
-    plan_name = forms.CharField(label='계획 이름')
-    datetime = forms.DateTimeField(
+    name = forms.CharField(label='계획 이름')
+    dttm = forms.DateTimeField(
         widget=DateTimePicker(
             options={
                 'useCurrent': True,
@@ -19,7 +20,11 @@ class NewPlanForm(forms.Form):
         ),
         label='예정 시각'
     )
-    attendee_num = forms.DecimalField(label="참가인원(선택)", required=False)
+    max_attendee = forms.DecimalField(label="참가인원(선택)", required=False)
+
+    class Meta:
+        model = Plan
+        fields = ['guild', 'name', 'dttm', 'max_attendee']
 
     def __init__(self, *args, **kwargs):
         super(NewPlanForm, self).__init__(*args, **kwargs)
